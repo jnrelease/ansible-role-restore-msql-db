@@ -1,11 +1,37 @@
 ---
+- name: Create restore folder
+  win_file:
+    path: '{{ res_path }}'
+    state: directory
+  when: inventory_hostname == 'soadb03'
+  delegate_to: soadb03
+  notify: RestoreFolder Created
+  ignore_errors: true
+  register: result2
+
+- name: Fetch files from remote backup folder
+  win_fetch:
+    src: '{{ bak_path }}'
+    dest: '{{ res_path }}'
+  flat: yes
+  when: inventory_hostname == 'sqltest'
+  delegate_to: sqltest
+  notify: RestoreFiles Copied
+  ignore_errors: true
+
 - name: Generate SQL script from template
   template:
     src: ../templates/restore.sql.j2
-    dest: "{{bak_path}} + 'restore.sql'"
+    dest: "{{res_path}} + 'restore.sql'"
+  when: inventory_hostname == 'soadb03'
+  delegate_to: soadb03
+  notify: RestoreSQL Created
 
 - name: Execute SQL script on database
   win_shell: |
-    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{bak_path}} + 'backup.sql'" 
+    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{res_path}} + 'restore.sql'" 
+  when: inventory_hostname == 'soadb03'
+  delegate_to: soadb03
   register: sql_output
+  notify: RestoreSQL Executed
 
