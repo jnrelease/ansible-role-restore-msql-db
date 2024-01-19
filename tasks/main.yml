@@ -29,7 +29,7 @@
 
 - name: Execute SQL script on database
   win_shell: |
-    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{res_path}} + 'restore.sql'" 
+    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{res_path}} + 'restore.sql' -ConnectionTimeout 100 -QueryTimeout 300" 
   when: inventory_hostname == 'soadb03'
   delegate_to: soadb03
   register: sql_output
