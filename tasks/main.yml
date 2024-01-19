@@ -1,0 +1,11 @@
+---
+- name: Generate SQL script from template
+  template:
+    src: ../templates/restore.sql.j2
+    dest: "{{bak_path}} + 'restore.sql'"
+
+- name: Execute SQL script on database
+  win_shell: |
+    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{bak_path}} + 'backup.sql'" 
+  register: sql_output
+
