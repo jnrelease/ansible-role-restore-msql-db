@@ -34,7 +34,7 @@
       $databasesToRestore = {{ bak_files.files | map(attribute='filename') | list | to_json }}
       $databasesToRestore = $databasesToRestore | ConvertFrom-Json
       foreach ($database in $databasesToRestore) {
-          Restore-DbaDatabase -Path "$backupFolder\\$database.filename" -SqlInstance $sqlServerInstance -Database $database
+          Restore-DbaDatabase -Path "$backupFolder$database.filename" -SqlInstance $sqlServerInstance -Database $database
       }
     args:
       executable: powershell.exe
@@ -45,6 +45,7 @@
     win_shell: Remove-Item -Path "{{ bak_path }}" -Recurse -Force
     args:
       executable: powershell.exe
+    when: inventory_hostname == 'sqltest'
     notify: Remove BackUpFolder
     
 
