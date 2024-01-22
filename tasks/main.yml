@@ -28,23 +28,18 @@
     when: inventory_hostname == 'sqltest'
 
   - name: Restore Databases
-    win_shell: |
-      $backupFolder = "{{ bak_path }}"
-      $sqlServerInstance = "{{ sql_server_instance }}"
-      $databasesToRestore = {{ bak_files.files | map(attribute='filename') | list | to_json }}
-      $databasesToRestore = $databasesToRestore | ConvertFrom-Json
-      foreach ($database in $databasesToRestore) {
-          Restore-DbaDatabase -Path "$backupFolder$database.filename" -SqlInstance $sqlServerInstance -Database $database
-      }
-    args:
-      executable: powershell.exe
+    community.general.dbatools_restore:
+      sql_instance: "{{ sql_server_instance }}"
+      database: "{{ item.filename | regex_replace('_(\\d{8})\\.BAK$', '') }}"  # Extract database name from filename
+      source: "{{ bak_path }}/{{ item.filename }}"
+    loop: "{{ bak_files.files }}"
     when: inventory_hostname == 'sqltest'
     notify: Restore Executed
   
   - name: Remove Backup Folder
-    win_shell: Remove-Item -Path "{{ bak_path }}" -Recurse -Force
-    args:
-      executable: powershell.exe
+    ansible.windows.win_file:
+      path: "{{ bak_path }}"
+      state: absent
     when: inventory_hostname == 'sqltest'
     notify: Remove BackUpFolder
     
