@@ -19,7 +19,7 @@
 
   - name: Define Variables
     set_fact:
-      sql_server_instance: "{{ restore_server }}\localhost"
+      sql_server_instance: "{{ restore_server }}\\localhost"
     when: inventory_hostname == 'sqltest'
 
   - name: Restore Databases
