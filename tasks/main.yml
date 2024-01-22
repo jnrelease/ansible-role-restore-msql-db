@@ -1,12 +1,9 @@
 ---
   - name: Install DBATools PowerShell module
-    win_shell: Install-Module -Name dbatools -Force -Scope CurrentUser
-    args:
-      executable: powershell.exe
-    when: inventory_hostname == 'sqltest'
-
-  - name: Import DBATools module
-    win_shell: Import-Module dbatools
+    win_shell: |
+      $ErrorActionPreference = "Stop"
+      Install-Module -Name dbatools -Force -AllowClobber -Scope AllUsers
+    become: true
     args:
       executable: powershell.exe
     when: inventory_hostname == 'sqltest'
@@ -28,11 +25,19 @@
     when: inventory_hostname == 'sqltest'
 
   - name: Restore Databases
-    community.general.dbatools_restore:
-      sql_instance: "{{ sql_server_instance }}"
-      database: "{{ item.filename | regex_replace('_(\\d{8})\\.BAK$', '') }}"  # Extract database name from filename
-      source: "{{ bak_path }}/{{ item.filename }}"
-    loop: "{{ bak_files.files }}"
+    win_shell: |
+      $ErrorActionPreference = "Stop"
+      Import-Module dbatools
+      $backupFolder = "{{ bak_path }}"
+      $sqlServerInstance = "{{ sql_server_instance }}"
+      $databasesToRestore = {{ bak_files.files | map(attribute='filename') | list | to_json }}
+      $databasesToRestore = $databasesToRestore | ConvertFrom-Json
+      foreach ($database in $databasesToRestore) {
+          Restore-DbaDatabase -Path "$backupFolder\$($database.filename)" -SqlInstance $sqlServerInstance -Database $database
+      }
+    become: true
+    args:
+      executable: powershell.exe
     when: inventory_hostname == 'sqltest'
     notify: Restore Executed
   
