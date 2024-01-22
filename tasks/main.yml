@@ -1,37 +1,28 @@
 ---
-- name: Create restore folder
-  win_file:
-    path: '{{ res_path }}'
-    state: directory
-  when: inventory_hostname == 'soadb03'
-  delegate_to: soadb03
-  notify: RestoreFolder Created
-  ignore_errors: true
-  register: result2
+  - name: Install DBATools PowerShell module
+      win_shell: Install-Module -Name dbatools -Force -Scope CurrentUser
+      args:
+        executable: powershell.exe
 
-- name: Fetch files from remote backup folder
-  win_fetch:
-    src: '{{ bak_path }}'
-    dest: '{{ res_path }}'
-  flat: yes
-  when: inventory_hostname == 'sqltest'
-  delegate_to: sqltest
-  notify: RestoreFiles Copied
-  ignore_errors: true
+  - name: Import DBATools module
+    win_shell: Import-Module dbatools
+    args:
+      executable: powershell.exe
 
-- name: Generate SQL script from template
-  template:
-    src: ../templates/restore.sql.j2
-    dest: "{{res_path}} + 'restore.sql'"
-  when: inventory_hostname == 'soadb03'
-  delegate_to: soadb03
-  notify: RestoreSQL Created
+  - name: Define Variables
+    set_fact:
+      sql_server_instance: "{{ restore_server }}\\localhost"
 
-- name: Execute SQL script on database
-  win_shell: |
-    Invoke-Sqlcmd -ServerInstance "localhost"  -InputFile "{{res_path}} + 'restore.sql'" -ConnectionTimeout 100 -QueryTimeout 300
-  when: inventory_hostname == 'soadb03'
-  delegate_to: soadb03
-  register: sql_output
-  notify: RestoreSQL Executed
+  - name: Restore Databases
+    win_shell: |
+      $backupFolder = "{{ bak_path }}"
+      $sqlServerInstance = "{{ sql_server_instance }}"
+      $databasesToRestore = {{ db_names | to_nice_json }}
+      foreach ($database in $databasesToRestore) {
+          Restore-DbaDatabase -Path "$backupFolder\\$database*.bak" -SqlInstance $sqlServerInstance -Database $database
+      }
+    args:
+      executable: powershell.exe
+    when: inventory_hostname == 'sqltest'
+    notify: Restore Executed
 
