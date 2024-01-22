@@ -37,7 +37,7 @@
     notify: Restore Executed
   
   - name: Remove Backup Folder
-    ansible.windows.win_file:
+    win_file:
       path: "{{ bak_path }}"
       state: absent
     when: inventory_hostname == 'sqltest'
