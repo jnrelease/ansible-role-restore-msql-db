@@ -1,17 +1,20 @@
 ---
   - name: Install DBATools PowerShell module
-      win_shell: Install-Module -Name dbatools -Force -Scope CurrentUser
-      args:
-        executable: powershell.exe
+    win_shell: Install-Module -Name dbatools -Force -Scope CurrentUser
+    args:
+      executable: powershell.exe
+    when: inventory_hostname == 'sqltest'
 
   - name: Import DBATools module
     win_shell: Import-Module dbatools
     args:
       executable: powershell.exe
+    when: inventory_hostname == 'sqltest'
 
   - name: Define Variables
     set_fact:
       sql_server_instance: "{{ restore_server }}\\localhost"
+    when: inventory_hostname == 'sqltest'
 
   - name: Restore Databases
     win_shell: |
