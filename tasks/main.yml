@@ -1,9 +1,7 @@
 ---
   - name: Install DBATools PowerShell module
     win_shell: |
-      $ErrorActionPreference = "Stop"
       Install-Module -Name dbatools -Force -AllowClobber -Scope AllUsers
-    become: true
     args:
       executable: powershell.exe
     when: inventory_hostname == 'sqltest'
@@ -26,7 +24,6 @@
 
   - name: Restore Databases
     win_shell: |
-      $ErrorActionPreference = "Stop"
       Import-Module dbatools
       $backupFolder = "{{ bak_path }}"
       $sqlServerInstance = "{{ sql_server_instance }}"
@@ -35,7 +32,6 @@
       foreach ($database in $databasesToRestore) {
           Restore-DbaDatabase -Path "$backupFolder\$($database.filename)" -SqlInstance $sqlServerInstance -Database $database
       }
-    become: true
     args:
       executable: powershell.exe
     when: inventory_hostname == 'sqltest'
