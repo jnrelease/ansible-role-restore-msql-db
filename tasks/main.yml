@@ -29,7 +29,7 @@
       $ServerInstance = "{{ sql_server_instance }}"
       $databaseFilesToRestore = {{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | join(', ') }}
       $databaseToRestore = {{ db_names | to_json }}
-      foreach ($database in $databaseToRestore) {
+      foreach ($database in $databaseToRestore.Split(',')) {
         foreach ($databaseFileToRestore in $databaseFilesToRestore.split(', ')){
           if($database -contains $databaseFileToRestore){
             Restore-SqlDatabase -ServerInstance $ServerInstance -Database $database -BackupFile $databaseFileToRestore -AutoRelocateFile -PassThru
