@@ -11,6 +11,17 @@
       executable: powershell.exe
     when: inventory_hostname == 'sqltest'
 
+  - name: Create list of script names
+    ansible.windows.win_find:
+      paths: "{{ bak_path }}"
+      patterns: "{{ file_pattern }}"
+      hidden: true
+      recurse: true
+    when: inventory_hostname == 'sqltest'
+    delegate_to: sqltest
+    register: bak_files
+    notify: DBScripts List
+
   - name: Define Variables
     set_fact:
       sql_server_instance: "{{ restore_server }}\\localhost"
@@ -20,12 +31,19 @@
     win_shell: |
       $backupFolder = "{{ bak_path }}"
       $sqlServerInstance = "{{ sql_server_instance }}"
-      $databasesToRestore = {{ db_names | to_nice_json }}
+      $databasesToRestore = {{ bak_files.files | to_nice_json }}
       foreach ($database in $databasesToRestore) {
-          Restore-DbaDatabase -Path "$backupFolder\\$database*.bak" -SqlInstance $sqlServerInstance -Database $database
+          Restore-DbaDatabase -Path "$backupFolder\\$database.filename" -SqlInstance $sqlServerInstance -Database $database
       }
     args:
       executable: powershell.exe
     when: inventory_hostname == 'sqltest'
     notify: Restore Executed
+  
+  - name: Remove Backup Folder
+    win_shell: Remove-Item -Path "{{ bak_path }}" -Recurse -Force
+    args:
+      executable: powershell.exe
+    notify: Remove BackUpFolder
+    
 
