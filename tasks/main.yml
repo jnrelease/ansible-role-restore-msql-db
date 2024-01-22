@@ -27,7 +27,7 @@
       Import-Module dbatools
       $backupFolder = "{{ bak_path }}"
       $ServerInstance = "{{ sql_server_instance }}"
-      $databaseFilesToRestore = {{ bak_files.files | map(attribute='path') | to_json | from_json }}
+      $databaseFilesToRestore = {{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | from_json }}
       $databaseToRestore = {{ db_names | to_json }}
       foreach ($database in $databaseToRestore) {
         foreach ($databaseFileToRestore in $databaseFilesToRestore){
