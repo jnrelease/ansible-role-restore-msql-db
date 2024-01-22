@@ -31,7 +31,7 @@
       $databaseToRestore = {{ db_names | to_json }}
       foreach ($database in $databaseToRestore) {
         foreach ($databaseFileToRestore in $databaseFilesToRestore){
-          if($database -contains databaseFileToRestore){
+          if($database -contains $databaseFileToRestore){
             Restore-SqlDatabase -ServerInstance $ServerInstance -Database $database -BackupFile "$databaseFileToRestore" -AutoRelocateFile -PassThru
           }
         }
