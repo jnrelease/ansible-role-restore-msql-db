@@ -31,7 +31,8 @@
     win_shell: |
       $backupFolder = "{{ bak_path }}"
       $sqlServerInstance = "{{ sql_server_instance }}"
-      $databasesToRestore = {{ bak_files.files | to_nice_json }}
+      $databasesToRestore = {{ bak_files.files map(attribute='filename') | list | to_json }}
+      $databasesToRestore = $databasesToRestore | ConvertFrom-Json
       foreach ($database in $databasesToRestore) {
           Restore-DbaDatabase -Path "$backupFolder\\$database.filename" -SqlInstance $sqlServerInstance -Database $database
       }
