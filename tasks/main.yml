@@ -19,18 +19,22 @@
 
   - name: Define Variables
     set_fact:
-      sql_server_instance: "{{ restore_server }}\\localhost"
+      sql_server_instance: "{{ restore_server }}\localhost"
     when: inventory_hostname == 'sqltest'
 
   - name: Restore Databases
     win_shell: |
       Import-Module dbatools
       $backupFolder = "{{ bak_path }}"
-      $sqlServerInstance = "{{ sql_server_instance }}"
-      $databasesToRestore = {{ bak_files.files | map(attribute='filename') | list | to_json }}
-      $databasesToRestore = $databasesToRestore | ConvertFrom-Json
-      foreach ($database in $databasesToRestore) {
-          Restore-DbaDatabase -Path "$backupFolder\$($database.filename)" -SqlInstance $sqlServerInstance -Database $database
+      $ServerInstance = "{{ sql_server_instance }}"
+      $databaseFilesToRestore = $databasesToRestore = {{ bak_files.files | map(attribute='path') | to_json | from_json }}
+      $databaseToRestore = {{ db_names | to_json }}
+      foreach ($database in $$databaseToRestore) {
+        foreach($databaseFileToRestore in databaseFilesToRestore){
+          if($database -contains databaseFileToRestore){
+            Restore-SqlDatabase -ServerInstance $ServerInstance -Database $database -BackupFile "$databaseFileToRestore" -AutoRelocateFile -PassThru
+          }
+        }
       }
     args:
       executable: powershell.exe
