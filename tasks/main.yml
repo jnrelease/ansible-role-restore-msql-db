@@ -36,7 +36,7 @@
       foreach ($database in $databaseArray) {
         foreach ($databaseFileToRestore in $databaseFilesArray){
           if($databaseFileToRestore -contains $database){
-            Restore-SqlDatabase -ServerInstance $ServerInstance -Database $database -BackupFile "$databaseFileToRestore" -AutoRelocateFile -PassThru
+            Restore-SqlDatabase -ServerInstance $ServerInstance -Database $database -BackupFile "$databaseFileToRestore"
           }
         }
       }
