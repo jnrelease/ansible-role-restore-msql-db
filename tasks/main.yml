@@ -30,20 +30,10 @@
       $databaseFilesToRestore = "{{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | join(', ') }}"
       $databaseToRestore = "{{ db_names | to_json }}"
     
-      # $databaseArray = $databaseToRestore -split ','
-      # $databaseFilesArray = $databaseFilesToRestore -split ','
-      
-      
       Write-Output $databaseFilesToRestore
       Write-Output $databaseToRestore
 
-      # foreach ($database in $databaseArray) {
-      #   foreach ($databaseFileToRestore in $databaseFilesArray){
-      #     if($databaseFileToRestore -contains $database){
-      #       Restore-SqlDatabase -ServerInstance "$ServerInstance" -Database "$database" -BackupFile "$databaseFileToRestore"
-      #     }
-      #   }
-      # }
+      
   args:
     executable: powershell.exe
   when: inventory_hostname == 'sqltest'
