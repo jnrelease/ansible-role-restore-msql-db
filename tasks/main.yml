@@ -32,14 +32,18 @@
     
       $databaseArray = $databaseToRestore -split ','
       $databaseFilesArray = $databaseFilesToRestore -split ','
+      
+      
+      Write-Output $databaseArray
+      $databaseArray $databaseFilesArray
 
-      foreach ($database in $databaseArray) {
-        foreach ($databaseFileToRestore in $databaseFilesArray){
-          if($databaseFileToRestore -contains $database){
-            Restore-SqlDatabase -ServerInstance "$ServerInstance" -Database "$database" -BackupFile "$databaseFileToRestore"
-          }
-        }
-      }
+      # foreach ($database in $databaseArray) {
+      #   foreach ($databaseFileToRestore in $databaseFilesArray){
+      #     if($databaseFileToRestore -contains $database){
+      #       Restore-SqlDatabase -ServerInstance "$ServerInstance" -Database "$database" -BackupFile "$databaseFileToRestore"
+      #     }
+      #   }
+      # }
   args:
     executable: powershell.exe
   when: inventory_hostname == 'sqltest'
