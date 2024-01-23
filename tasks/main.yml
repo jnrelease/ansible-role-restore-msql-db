@@ -27,11 +27,11 @@
       Import-Module dbatools
       $backupFolder = "{{ bak_path }}"
       $ServerInstance = "{{ sql_server_instance }}"
-      $databaseFilesToRestore = {{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | join(', ') }}
-      $databaseToRestore = {{ db_names | to_json }}
-      
-      $databaseArray = $databaseToRestore.Split(",")
-      $databaseFilesArray = $databaseFilesToRestore.Split(",")
+      $databaseFilesToRestore = "{{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | join(', ') }}"
+      $databaseToRestore = "{{ db_names | to_json }}"
+    
+      $databaseArray = $databaseToRestore -split ','
+      $databaseFilesArray = $databaseFilesToRestore -split ','
 
       foreach ($database in $databaseArray) {
         foreach ($databaseFileToRestore in $databaseFilesArray){
@@ -40,10 +40,11 @@
           }
         }
       }
-    args:
-      executable: powershell.exe
-    when: inventory_hostname == 'sqltest'
-    notify: Restore Executed
+  args:
+    executable: powershell.exe
+  when: inventory_hostname == 'sqltest'
+  notify: Restore Executed
+
   
   - name: Remove Backup Folder
     win_file:
