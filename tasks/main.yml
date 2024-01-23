@@ -35,7 +35,7 @@
       
       
       Write-Output $databaseFilesToRestore
-      $databaseArray $databaseToRestore
+      Write-Output $databaseToRestore
 
       # foreach ($database in $databaseArray) {
       #   foreach ($databaseFileToRestore in $databaseFilesArray){
