@@ -1,5 +1,5 @@
 DECLARE @backupLocation NVARCHAR(512); -- specify the location of backup files
-SET @backupLocation = {{ res_path }}; -- change this to the actual path
+SET @backupLocation = {{ bak_path }}; -- change this to the actual path
 
 -- Create a cursor to iterate through the backup files
 DECLARE restore_cursor CURSOR READ_ONLY FOR  

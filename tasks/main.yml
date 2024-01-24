@@ -1,50 +1,43 @@
 ---
-  - name: Install DBATools PowerShell module
-    win_shell: |
-      Install-Module -Name dbatools -Force -AllowClobber -Scope AllUsers
-    args:
-      executable: powershell.exe
-    when: inventory_hostname == 'sqltest'
+# - name: Create restore folder
+#   win_file:
+#     path: '{{ res_path }}'
+#     state: directory
+#   when: inventory_hostname == 'sqltest'
+#   delegate_to: sqltest
+#   notify: RestoreFolder Created
+#   ignore_errors: true
+#   register: result2
 
-  - name: Create list of script names
-    ansible.windows.win_find:
-      paths: "{{ bak_path }}"
-      patterns: "{{ file_pattern }}"
-      hidden: true
-      recurse: true
-    when: inventory_hostname == 'sqltest'
-    delegate_to: sqltest
-    register: bak_files
-    notify: DBScripts List
+# - name: Fetch files from remote backup folder
+#   win_fetch:
+#     src: '{{ bak_path }}'
+#     dest: '{{ res_path }}'
+#   flat: yes
+#   when: inventory_hostname == 'sqltest'
+#   delegate_to: sqltest
+#   notify: RestoreFiles Copied
+#   ignore_errors: true
 
-  - name: Define Variables
-    set_fact:
-      sql_server_instance: "{{ restore_server }}\\localhost"
-    when: inventory_hostname == 'sqltest'
-
-  - name: Restore Databases
-    win_shell: |
-      Import-Module dbatools
-      $backupFolder = "{{ bak_path }}"
-      $ServerInstance = "{{ sql_server_instance }}"
-      $databaseFilesToRestore = "{{ bak_files.files | map(attribute='path') | to_json | from_json | map('regex_replace', '^u', '') | join(', ') }}"
-      $databaseToRestore = "{{ db_names | to_json }}"
-    
-      Write-Output $databaseFilesToRestore
-      Write-Output $databaseToRestore
-
-      
-  args:
-    executable: powershell.exe
+- name: Generate SQL script from template
+  template:
+    src: ../templates/restore.sql.j2
+    dest: "{{ bak_path }}\\ + 'restore.sql'"
   when: inventory_hostname == 'sqltest'
-  notify: Restore Executed
+  delegate_to: sqltest
+  notify: RestoreSQL Created
 
-  
-  # - name: Remove Backup Folder
-  #   win_file:
-  #     path: "{{ bak_path }}"
-  #     state: absent
-  #   when: inventory_hostname == 'sqltest'
-  #   notify: Remove BackUpFolder
-    
+- name: Execute SQL script on database
+  win_shell: |
+    $SqlFile = "{{bak_path}}\\ + 'restore.sql'"
+    $uid = 'ansible'
+    $pwd = ConvertTo-SecureString -String  '{{ db_user_psw }}' -AsPlainText -Force
+    $pwd.MakeReadOnly()
+    $creds = New-Object System.Management.Automation.PSCredential $uid,$pwd
+    $Password = $creds.GetNetworkCredential().Password
 
+    Invoke-SqlCmd -InputFile $SqlFile -Username 'ansible' -Password $Password -ServerInstance 'SOADB03UAT\MSSQLSERVER' -Database 'master' -ConnectionTimeout 100 -QueryTimeout 300
+  when: inventory_hostname == 'sqltest'
+  delegate_to: sqltest
+  register: sql_output
+  notify: RestoreSQL Executed
